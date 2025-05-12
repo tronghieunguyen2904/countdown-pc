@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Countdown to PC Day</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet" />
+    <style>
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background: #0f172a;
+            color: #e0e7ff;
+            overflow: hidden;
+            margin: 0;
+        }
+
+        canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+        }
+
+        #trackCanvas {
+            z-index: 10;
+            pointer-events: none;
+        }
+
+        .content {
+            position: relative;
+            z-index: 20;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+
+        .timeline {
+            margin-top: 40px;
+            width: 100%;
+            max-width: 800px;
+            text-align: left;
+            color: #e0e7ff;
+            position: relative;
+        }
+
+        .timeline h2 {
+            font-size: 2rem;
+            text-align: center;
+        }
+
+        .timeline h5 {
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        .timeline ul {
+            list-style: none;
+            padding-left: 0;
+            position: relative;
+            margin: 0;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            top: 25%;
+            bottom: 0;
+            left: 50%;
+            width: 3px;
+            background-color: rgba(255, 255, 255, 0.5);
+            transform: translateX(-50%);
+        }
+
+        .timeline li {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            position: relative;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .timeline li:hover {
+            background-color: rgba(79, 70, 229, 0.1);
+        }
+
+        .timeline li .event-time {
+            font-weight: bold;
+            color: #9ca3af;
+        }
+
+        .timeline li .event-desc {
+            color: #e0e7ff;
+        }
+
+        .timeline li:nth-child(odd) {
+            flex-direction: row-reverse;
+        }
+
+        .timeline li:nth-child(odd) .event-time {
+            text-align: right;
+        }
+
+        .timeline li:nth-child(even) .event-time {
+            text-align: left;
+        }
+
+        .timeline li .event-time,
+        .timeline li .event-desc {
+            width: 45%;
+        }
+
+        .timeline li::after {
+            content: '';
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            width: 10px;
+            height: 10px;
+            background-color: #ffffff;
+            border-radius: 50%;
+            transform: translateX(-50%);
+        }
+
+        /* Modal styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            z-index: 100;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background-color: #1e293b;
+            padding: 2rem;
+            border-radius: 0.5rem;
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        .close-modal {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #9ca3af;
+        }
+
+        .modal-title {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 1rem;
+            color: #818cf8;
+        }
+
+        .modal-time {
+            color: #9ca3af;
+            margin-bottom: 1rem;
+        }
+
+        .modal-details {
+            line-height: 1.6;
+        }
+
+        /* Table styles */
+        .modal-details table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+
+        .modal-details th {
+            text-align: left;
+            padding: 0.5rem 1rem;
+            background-color: #1e40af;
+            color: #e0e7ff;
+        }
+
+        .modal-details td {
+            padding: 0.5rem 1rem;
+            border-bottom: 1px solid #334155;
+        }
+
+        .modal-details tr:hover {
+            background-color: #1f2937;
+        }
+
+        /* Heart styles */
+        .heart-container {
+            display: flex;
+            justify-content: center;
+            margin: 30px 0;
+        }
+
+        .heart {
+            width: 100px;
+            height: 100px;
+            fill: #ff4d6d;
+            animation: pulse 1.5s infinite ease-in-out;
+            filter: drop-shadow(0 0 10px #ff759b);
+        }
+
+        /* Glow Effect */
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(1);
+                filter: drop-shadow(0 0 10px #ff759b);
+            }
+            50% {
+                transform: scale(1.2);
+                filter: drop-shadow(0 0 30px #ff759b);
+            }
+        }
+
+        .gender-icon {
+            width: 140px;
+            height: 140px;
+            animation: tilt 1s infinite ease-in-out;
+            transform-origin: center bottom;
+        }
+
+        @keyframes tilt {
+            0%, 100% {
+                transform: rotate(0deg);
+            }
+            25% {
+                transform: rotate(-15deg);
+            }
+            50% {
+                transform: rotate(0deg);
+            }
+            75% {
+                transform: rotate(15deg);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Starry background -->
+    <canvas id="starCanvas"></canvas>
+    <!-- Track and icons -->
+    <canvas id="trackCanvas"></canvas>
+
+    <div class="content">
+        <h1 class="text-5xl sm:text-6xl font-extrabold mb-6 tracking-wide text-center">
+            Đếm ngược đến ngày <span class="text-indigo-400">17/05</span>
+        </h1>
+        <p class="text-xl sm:text-2xl mb-10 text-indigo-300 text-center">
+            Ngày bạn sẽ sở hữu chiếc PC mơ ước! Hãy cùng chờ đợi và tiến gần hơn từng bước.
+        </p>
+        <div id="countdown" class="flex justify-center space-x-6 text-indigo-400 text-4xl sm:text-5xl font-bold">
+            <div class="flex flex-col items-center">
+                <span id="days">00</span>
+                <span class="text-sm font-normal mt-1">Ngày</span>
+            </div>
+            <div class="flex flex-col items-center">
+                <span id="hours">00</span>
+                <span class="text-sm font-normal mt-1">Giờ</span>
+            </div>
+            <div class="flex flex-col items-center">
+                <span id="minutes">00</span>
+                <span class="text-sm font-normal mt-1">Phút</span>
+            </div>
+            <div class="flex flex-col items-center">
+                <span id="seconds">00</span>
+                <span class="text-sm font-normal mt-1">Giây</span>
+            </div>
+        </div>
+
+        <!-- Timeline Section -->
+        <div class="timeline">
+            <h2>Timeline</h2>
+            <h5>(Click vào từng timeline để xem chi tiết)</h5>
+            <ul>
+                <li data-index="0">
+                    <span class="event-desc font-extrabold"><span class="text-indigo-400">17/05 - Buổi sáng</span> - Mua
+                        chiếc PC mơ ước tại cửa hàng.</span>
+                </li>
+                <li data-index="1">
+                    <span class="event-desc font-extrabold"><span class="text-indigo-400">17/05 - Buổi trưa</span> - Lắp
+                        ráp và kiểm tra máy tính mới.</span>
+                </li>
+                <li data-index="2">
+                    <span class="event-desc font-extrabold"><span class="text-indigo-400">17/05 - Buổi tối</span> - Đi
+                        ăn mừng sinh nhật cùng bạn gái!</span>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Modal for timeline details -->
+    <div id="timelineModal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <h3 class="modal-title" id="modalTitle"></h3>
+            <div class="modal-time" id="modalTime"></div>
+            <div class="modal-details" id="modalDetails"></div>
+        </div>
+    </div>
+
+    <script>
+        // Timeline data
+        const timelineData = [
+            {
+                title: "Mua PC mơ ước",
+                time: "17/05 - Buổi sáng (9:00 - 11:00)",
+                details: `
+                    <p>Đến cửa hàng máy tính yêu thích để mua các linh kiện đã chọn lựa từ trước. Nhớ kiểm tra kỹ từng linh kiện trước khi thanh toán.</p>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Linh kiện</th>
+                                <th>Tên sản phẩm</th>
+                                <th>Thông số kỹ thuật</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>CPU</td>
+                                <td>Intel Core i5-13400</td>
+                                <td>10 cores (6P+4E), 16 threads, 4.6GHz Turbo</td>
+                            </tr>
+                            <tr>
+                                <td>GPU</td>
+                                <td>Gigabyte RTX 3060 Gaming OC</td>
+                                <td>12GB GDDR6, 3 quạt, Boost 1837MHz</td>
+                            </tr>
+                            <tr>
+                                <td>Mainboard</td>
+                                <td>ASUS B760M-K D4</td>
+                                <td>DDR4, Socket LGA1700</td>
+                            </tr>
+                            <tr>
+                                <td>RAM</td>
+                                <td>32GB DDR4</td>
+                                <td>3200MHz (2x16GB)</td>
+                            </tr>
+                            <tr>
+                                <td>Ổ cứng</td>
+                                <td>SSD 1TB NVMe</td>
+                                <td>Tốc độ đọc/ghi cao</td>
+                            </tr>
+                            <tr>
+                                <td>Case</td>
+                                <td>Cubi M Premium</td>
+                                <td>Mid Tower, kính cường lực</td>
+                            </tr>
+                            <tr>
+                                <td>Quạt case</td>
+                                <td>Ader Rus</td>
+                                <td>RGB, 120mm</td>
+                            </tr>
+                            <tr>
+                                <td>Tản nhiệt CPU</td>
+                                <td>Jonsbo CR-1000</td>
+                                <td>Tản khí, 4 heatpipe</td>
+                            </tr>
+                            <tr>
+                                <td>Nguồn</td>
+                                <td>650W 80+ Bronze</td>
+                                <td>Đủ công suất cho hệ thống</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <p class="mt-4">Tổng chi phí dự kiến: ~20-22 triệu VNĐ</p>
+                `
+            },
+            {
+                title: "Lắp ráp và kiểm tra",
+                time: "17/05 - Buổi trưa (12:00 - 15:00)",
+                details: "Về nhà và bắt đầu lắp ráp PC. Cẩn thận lắp từng linh kiện theo hướng dẫn. Sau khi lắp xong, cài đặt hệ điều hành Windows 11 và các driver cần thiết. Chạy các bài benchmark để kiểm tra hiệu năng và nhiệt độ của hệ thống. Tối ưu hóa cài đặt BIOS và các phần mềm cần thiết."
+            },
+            {
+                title: "Ăn mừng sinh nhật",
+                time: "17/05 - Buổi tối (18:00 - 22:00)",
+                details: `
+                <p>Này tao chịu, đi đâu thì chỉ có bạn biết. Thôi thì chúc đi chơi vui vẻ.</p>
+                <div class="heart-container flex items-center justify-center space-x-4">
+                    <!-- Icon Nam -->
+                    <img
+                    src="https://img.upanh.tv/2025/05/12/Gemini_Generated_Image_zf488gzf488gzf48-removebg-preview.png"
+                    alt="Male"
+                    class="gender-icon"
+                    />
+                    <!-- Trái tim -->
+                    <svg
+                    class="heart"
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    >
+                    <path d="M20.8 4.6c-1.5-1.7-3.9-1.9-5.5-.5-1.1.9-1.6 2.3-1.3 3.7-.3-1.4-1.1-2.8-2.3-3.7-1.6-1.3-4-1.1-5.5.5C4.7 5.6 4 7.6 4.8 9.1l7.2 8.7 7.2-8.7c.8-1.5.1-3.5-1.4-4.5z"/>
+                    </svg>
+                    <!-- Icon Nữ -->
+                    <img
+                    src="https://img.upanh.tv/2025/05/12/Gemini_Generated_Image_lo55i2lo55i2lo55-removebg-preview.png"
+                    alt="Female"
+                    class="gender-icon"
+                    />
+                </div>
+                `
+            }
+        ];
+
+        // Modal functionality
+        const modal = document.getElementById('timelineModal');
+        const modalTitle = document.getElementById('modalTitle');
+        const modalTime = document.getElementById('modalTime');
+        const modalDetails = document.getElementById('modalDetails');
+        const closeModal = document.querySelector('.close-modal');
+
+        // Add click event to timeline items
+        document.querySelectorAll('.timeline li').forEach(item => {
+            item.addEventListener('click', function () {
+                const index = this.getAttribute('data-index');
+                showTimelineDetails(index);
+            });
+        });
+
+        // Close modal when clicking X
+        closeModal.addEventListener('click', function () {
+            modal.style.display = 'none';
+        });
+
+        // Close modal when clicking outside
+        window.addEventListener('click', function (event) {
+            if (event.target === modal) {
+                modal.style.display = 'none';
+            }
+        });
+
+        function showTimelineDetails(index) {
+            const event = timelineData[index];
+            modalTitle.textContent = event.title;
+            modalTime.textContent = event.time;
+            modalDetails.innerHTML = event.details;
+            modal.style.display = 'flex';
+        }
+
+        // Starry background
+        const starCanvas = document.getElementById('starCanvas');
+        const starCtx = starCanvas.getContext('2d');
+        let stars = [];
+
+        function initStars() {
+            starCanvas.width = window.innerWidth;
+            starCanvas.height = window.innerHeight;
+            stars = Array.from({ length: 120 }).map(() => ({
+                x: Math.random() * starCanvas.width,
+                y: Math.random() * starCanvas.height,
+                r: Math.random() * 1.2 + 0.3,
+                alpha: Math.random(),
+                d: 0.005 + Math.random() * 0.015
+            }));
+        }
+
+        function drawStars() {
+            starCtx.clearRect(0, 0, starCanvas.width, starCanvas.height);
+            stars.forEach(s => {
+                s.alpha += s.d;
+                if (s.alpha <= 0 || s.alpha >= 1) s.d = -s.d;
+                starCtx.beginPath();
+                starCtx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+                starCtx.fillStyle = `rgba(255,255,255,${s.alpha})`;
+                starCtx.fill();
+            });
+            requestAnimationFrame(drawStars);
+        }
+
+        window.addEventListener('resize', () => {
+            initStars();
+            initTrack();
+            drawTrack(calculateProgress());
+        });
+
+        // Track canvas setup
+        const trackCanvas = document.getElementById('trackCanvas');
+        const trackCtx = trackCanvas.getContext('2d');
+        let personImg = new Image(), pcImg = new Image();
+        let imagesLoaded = 0;
+
+        function handleImageLoad() {
+            imagesLoaded++;
+            if (imagesLoaded === 2) {
+                initTrack();
+                drawTrack(calculateProgress());
+            }
+        }
+
+        personImg.onload = handleImageLoad;
+        pcImg.onload = handleImageLoad;
+        personImg.src = 'https://twemoji.maxcdn.com/2/72x72/1f6b6.png';
+        pcImg.src = 'https://twemoji.maxcdn.com/2/72x72/1f4bb.png';
+
+        function initTrack() {
+            trackCanvas.width = window.innerWidth;
+            trackCanvas.height = 200;
+            trackCanvas.style.top = (window.innerHeight - 220) + 'px';
+        }
+
+        function calculateProgress() {
+            const now = new Date();
+            const countdownDate = new Date(new Date().getFullYear(), 4, 17); // 17/05
+            if (now > countdownDate) countdownDate.setFullYear(countdownDate.getFullYear() + 1);
+            const startDate = new Date(countdownDate.getFullYear(), 0, 1); // 01/01 cùng năm
+            const progress = (now - startDate) / (countdownDate - startDate);
+            return Math.min(Math.max(progress, 0), 1);
+        }
+
+        function drawTrack(progress) {
+            if (!trackCtx || imagesLoaded < 2) return;
+
+            trackCtx.clearRect(0, 0, trackCanvas.width, trackCanvas.height);
+            const y = trackCanvas.height / 2;
+
+            // Draw dashed line
+            trackCtx.strokeStyle = 'rgba(224,231,255,0.5)';
+            trackCtx.lineWidth = 3;
+            trackCtx.setLineDash([10, 10]);
+            trackCtx.beginPath();
+            trackCtx.moveTo(40, y);
+            trackCtx.lineTo(trackCanvas.width - 40, y);
+            trackCtx.stroke();
+            trackCtx.setLineDash([]);
+
+            // Draw person
+            const sizeP = 50;
+            const xP = 40 + progress * (trackCanvas.width - 80 - sizeP);
+            trackCtx.drawImage(personImg, xP, y - sizeP, sizeP, sizeP);
+
+            // Draw PC at end
+            const sizeC = 60;
+            trackCtx.drawImage(pcImg, trackCanvas.width - 40 - sizeC, y - sizeC, sizeC, sizeC);
+        }
+
+        // Countdown
+        const daysEl = document.getElementById('days');
+        const hoursEl = document.getElementById('hours');
+        const minutesEl = document.getElementById('minutes');
+        const secondsEl = document.getElementById('seconds');
+
+        function updateCountdown() {
+            const now = new Date();
+            let countdownDate = new Date(now.getFullYear(), 4, 17); // 17/05
+            if (now > countdownDate) countdownDate.setFullYear(countdownDate.getFullYear() + 1);
+
+            const diff = countdownDate - now;
+            if (diff <= 0) return;
+
+            const d = Math.floor(diff / 86400000);
+            const h = Math.floor((diff % 86400000) / 3600000);
+            const m = Math.floor((diff % 3600000) / 60000);
+            const s = Math.floor((diff % 60000) / 1000);
+
+            daysEl.textContent = String(d).padStart(2, '0');
+            hoursEl.textContent = String(h).padStart(2, '0');
+            minutesEl.textContent = String(m).padStart(2, '0');
+            secondsEl.textContent = String(s).padStart(2, '0');
+
+            drawTrack(calculateProgress());
+            requestAnimationFrame(updateCountdown);
+        }
+
+        // Initialize everything
+        initStars();
+        drawStars();
+        updateCountdown();
+    </script>
+</body>
+
+</html>
